@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Three.js Animation Engine</title>
+    <link rel="stylesheet" href='./styles.css'>
+</head>
+<body>
+    <div id="container">
+        <div id="viewport">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
+            <div class="toolbox-toggle" id="toolboxToggle">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </div>
+            <div class="transform-gizmo" id="transformGizmo"></div>
+            <div class="light-helper" id="lightHelper"></div>
+            <div class="sculpt-overlay" id="sculptOverlay">
+                <div class="sculpt-cursor" id="sculptCursor"></div>
+            </div>
+        </div>
+        
+        <!-- Navigation Sidebar -->
+        <div class="nav-sidebar">
+            <div class="nav-item active" data-panel="objects">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2l-5.5 9h11z M12 22l5.5-9h-11z M3.5 9L9 20l5.5-9z M20.5 9L15 20l-5.5-9z"/>
+                </svg>
+                <span class="nav-tooltip">Objects</span>
+            </div>
+            <div class="nav-item" data-panel="edit">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                <span class="nav-tooltip">Edit</span>
+            </div>
+            <div class="nav-item" data-panel="animate">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span class="nav-tooltip">Animate</span>
+            </div>
+            <div class="nav-item" data-panel="record">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+                <span class="nav-tooltip">Record</span>
+            </div>
+            <div class="nav-item" data-panel="media">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4c.73 0 1.41-.21 2-.55V21h7V3h-7zm2 14h-3v-7.38c-.63-.52-1.43-.83-2.26-.83-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5c.83 0 1.63-.31 2.26-.83V17h3v-2z"/>
+                </svg>
+                <span class="nav-tooltip">Media</span>
+            </div>
+            <div class="nav-item" data-panel="export">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                <span class="nav-tooltip">Export</span>
+            </div>
+        </div>
+        
+        <!-- Tool Panels -->
+        <div class="tool-panel" id="objectsPanel">
+            <div class="tool-panel-header">
+                Objects
+                <span class="tool-panel-close" data-panel="objects">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2l-5.5 9h11z M12 22l5.5-9h-11z M3.5 9L9 20l5.5-9z M20.5 9L15 20l-5.5-9z"/>
+                    </svg>
+                    Primitives
+                </div>
+                <div class="tool-section-content">
+                    <div class="shapes-grid">
+                        <button class="button shape-button" id="addCube">Cube</button>
+                        <button class="button shape-button" id="addSphere">Sphere</button>
+                        <button class="button shape-button" id="addCylinder">Cylinder</button>
+                        <button class="button shape-button" id="addCone">Cone</button>
+                        <button class="button shape-button" id="addTorus">Torus</button>
+                        <button class="button shape-button" id="addTetrahedron">Tetrahedron</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.26C13.81 13.47 15 11.38 15 9c0-3.86-3.14-7-7-7zm2.25 9.5c-.41 0-.75.34-.75.75s.34.75.75.75c.41 0 .75-.34.75-.75s-.34-.75-.75-.75zM10 8c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2z"/>
+                    </svg>
+                    Lights
+                </div>
+                <div class="tool-section-content">
+                    <div class="dropdown-menu">
+                        <button class="dropdown-btn">
+                            Add Light
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" id="addPointLight">Point Light</a>
+                            <a href="#" id="addSpotLight">Spot Light</a>
+                            <a href="#" id="addDirectionalLight">Directional Light</a>
+                            <a href="#" id="addAmbientLight">Ambient Light</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                    </svg>
+                    Groups
+                </div>
+                <div class="tool-section-content">
+                    <button class="button secondary" id="addGroup" style="width: 100%;">Add Group</button>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                    </svg>
+                    Import
+                </div>
+                <div class="tool-section-content">
+                    <button class="button import-model-button" id="importModel">Import 3D Model</button>
+                    <input type="file" id="modelFileInput" class="file-input" accept=".gltf,.glb">
+                </div>
+            </div>
+        </div>
+        
+        <div class="tool-panel" id="editPanel">
+            <div class="tool-panel-header">
+                Edit Tools
+                <span class="tool-panel-close" data-panel="edit">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zm9 4h2v-2h-2v2zm0-16h-2v2h2V3zm4 16h2c0-1.1-.9-2-2-2v2zm0-8h2v-2h-2v2zm0-8h2V3c-1.1 0-2 .9-2 2z"/>
+                    </svg>
+                    Transform
+                </div>
+                <div class="tool-section-content">
+                    <div class="edit-tools-grid">
+                        <button class="button tool-button active" id="selectTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zm9 4h2v-2h-2v2zm0-16h-2v2h2V3zm4 16h2c0-1.1-.9-2-2-2v2zm0-8h2v-2h-2v2zm0-8h2V3c-1.1 0-2 .9-2 2z"/>
+                            </svg>
+                            Select
+                        </button>
+                        <button class="button tool-button" id="moveTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6v3l-5-5 5-5v3h3v4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/>
+                            </svg>
+                            Move
+                        </button>
+                        <button class="button tool-button" id="rotateTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z"/>
+                            </svg>
+                            Rotate
+                        </button>
+                        <button class="button tool-button" id="scaleTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            Scale
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z"/>
+                    </svg>
+                    Sculpt
+                </div>
+                <div class="tool-section-content">
+                    <div class="sculpt-tools-grid">
+                        <button class="button tool-button" id="sculptPushTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13H7v2h3V7zm0 4H7v2h3v-2zm0 4H7v2h3v-2zm4-8h-2v10h2V7zm4 0h-3v2h3V7zm0 4h-3v2h3v-2zm0 4h-3v2h3v-2z"/>
+                            </svg>
+                            Push
+                        </button>
+                        <button class="button tool-button" id="sculptPullTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13H8v2h4V7zm0 4H8v2h4v-2zm0 4H8v2h4v-2zm4-8h-2v10h2V7zm4 0h-3v2h3V7zm0 4h-3v2h3v-2zm0 4h-3v2h3v-2z"/>
+                            </svg>
+                            Pull
+                        </button>
+                        <button class="button tool-button" id="sculptSmoothTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-9H8v2h8v-2z"/>
+                            </svg>
+                            Smooth
+                        </button>
+                        <button class="button tool-button" id="sculptRidgeTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h6v2h-6v-2z"/>
+                            </svg>
+                            Ridge
+                        </button>
+                        <button class="button tool-button" id="sculptPinchTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-9h-4v2h4v-2z"/>
+                            </svg>
+                            Pinch
+                        </button>
+                        <button class="button tool-button" id="sculptFlattenTool">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7v-2z"/>
+                            </svg>
+                            Flatten
+                        </button>
+                    </div>
+                    <div class="tool-options">
+                        <div class="tool-slider-container">
+                            <div class="tool-slider-label">Size:</div>
+                            <input type="range" class="tool-slider" id="sculptSize" min="0.1" max="2" step="0.1" value="0.5">
+                            <div class="tool-slider-value" id="sculptSizeValue">0.5</div>
+                        </div>
+                        <div class="tool-slider-container">
+                            <div class="tool-slider-label">Strength:</div>
+                            <input type="range" class="tool-slider" id="sculptStrength" min="0.1" max="2" step="0.1" value="1">
+                            <div class="tool-slider-value" id="sculptStrengthValue">1.0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tool-panel" id="animatePanel">
+            <div class="tool-panel-header">
+                Animation Tools
+                <span class="tool-panel-close" data-panel="animate">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Playback
+                </div>
+                <div class="tool-section-content">
+                    <div class="animation-tools-grid">
+                        <button class="button" id="playBtn">Play</button>
+                        <button class="button secondary" id="pauseBtn">Pause</button>
+                        <button class="button secondary" id="stopBtn">Stop</button>
+                        <button class="button secondary" id="addKeyframeBtn">Add Keyframe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13H7v2h3V7zm0 4H7v2h3v-2zm0 4H7v2h3v-2zm4-8h-2v10h2V7zm4 0h-3v2h3V7zm0 4h-3v2h3v-2zm0 4h-3v2h3v-2z"/>
+                    </svg>
+                    Animation Clips
+                </div>
+                <div class="tool-section-content">
+                    <button class="button" id="addAnimation" style="width: 100%;">Add Animation</button>
+                    <button class="button secondary" id="deleteAnimation" style="width: 100%; margin-top: 5px;">Delete Animation</button>
+                    <button class="button secondary" id="duplicateAnimation" style="width: 100%; margin-top: 5px;">Duplicate Animation</button>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Keyframe Editing
+                </div>
+                <div class="tool-section-content">
+                    <button class="button secondary" id="editCurve" style="width: 100%;">Edit Animation Curves</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tool-panel" id="recordPanel">
+            <div class="tool-panel-header">
+                Recording Tools
+                <span class="tool-panel-close" data-panel="record">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13H7v2h3V7zm0 4H7v2h3v-2zm0 4H7v2h3v-2zm4-8h-2v10h2V7zm4 0h-3v2h3V7zm0 4h-3v2h3v-2zm0 4h-3v2h3v-2z"/>
+                    </svg>
+                    Recording Controls
+                </div>
+                <div class="tool-section-content">
+                    <div class="recording-controls-grid">
+                        <button class="button" id="startRecording">
+                            <span class="recording-indicator stopped"></span>
+                            Start Recording
+                        </button>
+                        <button class="button secondary" id="stopRecording">
+                            <span class="recording-indicator stopped"></span>
+                            Stop Recording
+                        </button>
+                        <button class="button secondary" id="pauseRecording">
+                            <span class="recording-indicator stopped"></span>
+                            Pause Recording
+                        </button>
+                        <button class="button secondary" id="resumeRecording">
+                            <span class="recording-indicator stopped"></span>
+                            Resume Recording
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    Export Recording
+                </div>
+                <div class="tool-section-content">
+                    <div class="export-options-grid">
+                        <button class="button secondary" id="exportVideo">Export as Video</button>
+                        <button class="button secondary" id="exportGIF">Export as GIF</button>
+                        <button class="button secondary" id="exportSequence">Export as Image Sequence</button>
+                        <button class="button secondary" id="exportData">Export Animation Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tool-panel" id="mediaPanel">
+            <div class="tool-panel-header">
+                Media Tools
+                <span class="tool-panel-close" data-panel="media">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4c.73 0 1.41-.21 2-.55V21h7V3h-7zm2 14h-3v-7.38c-.63-.52-1.43-.83-2.26-.83-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5c.83 0 1.63-.31 2.26-.83V17h3v-2z"/>
+                    </svg>
+                    Audio
+                </div>
+                <div class="tool-section-content">
+                    <div class="media-item">
+                        <div class="media-label">Background Music:</div>
+                        <input type="text" class="media-input" id="bgMusicInput" placeholder="Select music file">
+                        <button class="media-button" id="selectBgMusic">Select</button>
+                        <input type="file" id="bgMusicFile" class="file-input" accept="audio/*">
+                    </div>
+                    <div class="media-item">
+                        <div class="media-label">Sound Effects:</div>
+                        <input type="text" class="media-input" id="sfxInput" placeholder="Select sound file">
+                        <button class="media-button" id="selectSfx">Select</button>
+                        <input type="file" id="sfxFile" class="file-input" accept="audio/*">
+                    </div>
+                    <div class="media-item">
+                        <div class="media-label">Voice Over:</div>
+                        <input type="text" class="media-input" id="voiceInput" placeholder="Select voice file">
+                        <button class="media-button" id="selectVoice">Select</button>
+                        <input type="file" id="voiceFile" class="file-input" accept="audio/*">
+                    </div>
+                    <div class="media-item">
+                        <div class="media-label">Record Voice:</div>
+                        <button class="media-button" id="recordVoice">Record</button>
+                        <button class="media-button" id="stopRecordVoice">Stop</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 10H3V8h18v8zM6 15h2v-3H6v3zm4 0h2v-3h-2v3zm4 0h2v-3h-2v3z"/>
+                    </svg>
+                    Scene Transitions
+                </div>
+                <div class="tool-section-content">
+                    <div class="dropdown-menu">
+                        <button class="dropdown-btn">
+                            Select Transition
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" data-transition="fade">Fade</a>
+                            <a href="#" data-transition="slide">Slide</a>
+                            <a href="#" data-transition="zoom">Zoom</a>
+                            <a href="#" data-transition="wipe">Wipe</a>
+                            <a href="#" data-transition="dissolve">Dissolve</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tool-panel" id="exportPanel">
+            <div class="tool-panel-header">
+                Export Options
+                <span class="tool-panel-close" data-panel="export">×</span>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    Export Formats
+                </div>
+                <div class="tool-section-content">
+                    <div class="export-options-grid">
+                        <button class="button secondary" id="exportScene">Export Scene</button>
+                        <button class="button secondary" id="importScene">Import Scene</button>
+                        <button class="button secondary" id="exportAnimation">Export Animation</button>
+                        <button class="button secondary" id="importAnimation">Import Animation</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tool-section">
+                <div class="tool-section-header">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17V8h2v6.17l3.59-3.59L17 12l-5 5z"/>
+                    </svg>
+                    Share
+                </div>
+                <div class="tool-section-content">
+                    <button class="button secondary" id="shareProject" style="width: 100%;">Share Project</button>
+                    <button class="button secondary" id="publishProject" style="width: 100%; margin-top: 5px;">Publish Online</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="sidebar">
+            <div class="panel">
+                <div class="panel-header">Scene Hierarchy</div>
+                <div id="hierarchy"></div>
+                <div style="margin-top: 10px;">
+                    <button class="button danger" id="deleteObject" style="width: 100%;">Delete</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">Object Properties</div>
+                <div id="properties">
+                    <div class="property-row">
+                        <div class="property-label">Name:</div>
+                        <input type="text" class="property-input" id="propName">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Position X:</div>
+                        <input type="number" class="property-input" id="propPosX" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Position Y:</div>
+                        <input type="number" class="property-input" id="propPosY" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Position Z:</div>
+                        <input type="number" class="property-input" id="propPosZ" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Rotation X:</div>
+                        <input type="number" class="property-input" id="propRotX" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Rotation Y:</div>
+                        <input type="number" class="property-input" id="propRotY" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Rotation Z:</div>
+                        <input type="number" class="property-input" id="propRotZ" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Scale X:</div>
+                        <input type="number" class="property-input" id="propScaleX" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Scale Y:</div>
+                        <input type="number" class="property-input" id="propScaleY" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Scale Z:</div>
+                        <input type="number" class="property-input" id="propScaleZ" step="0.1">
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Color:</div>
+                        <input type="color" class="color-picker" id="propColor">
+                    </div>
+                </div>
+                
+                <!-- Physics Properties Panel -->
+                <div class="physics-panel">
+                    <div class="panel-header">Physics Properties</div>
+                    <div class="physics-toggle">
+                        <input type="checkbox" id="physicsEnabled" class="checkbox">
+                        <label for="physicsEnabled">Enable Physics</label>
+                    </div>
+                    <div class="physics-properties" id="physicsProperties">
+                        <div class="property-row">
+                            <div class="property-label">Mass:</div>
+                            <input type="number" class="property-input" id="propMass" value="1" min="0" step="0.1">
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Friction:</div>
+                            <input type="number" class="property-input" id="propFriction" value="0.5" min="0" max="1" step="0.1">
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Restitution:</div>
+                            <input type="number" class="property-input" id="propRestitution" value="0.3" min="0" max="1" step="0.1">
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Static:</div>
+                            <input type="checkbox" id="propStatic" class="checkbox">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">Animations</div>
+                <div id="animations"></div>
+            </div>
+        </div>
+        
+        <div id="timeline">
+            <div class="timeline-playhead" id="timelinePlayhead"></div>
+            <div id="timelineTracks"></div>
+            <div class="timeline-controls">
+                <button class="button" id="playBtn">Play</button>
+                <button class="button secondary" id="pauseBtn">Pause</button>
+                <button class="button secondary" id="stopBtn">Stop</button>
+                <button class="button secondary" id="physicsToggleBtn">Physics: Off</button>
+            </div>
+            <div class="timeline-time" id="timelineTime">0.00s</div>
+        </div>
+    </div>
+    
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="rename">Rename</div>
+        <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+        <div class="context-menu-item" data-action="delete">Delete</div>
+        <div class="context-menu-item" data-action="toggleVisibility">Toggle Visibility</div>
+        <div class="context-menu-item" data-action="toggleLock">Toggle Lock</div>
+    </div>
+    
+    <div class="modal" id="animationModal">
+        <div class="modal-content">
+            <div class="modal-header">Create Animation</div>
+            <div class="modal-body">
+                <div class="property-row">
+                    <div class="property-label">Name:</div>
+                    <input type="text" class="property-input" id="animationName">
+                </div>
+                <div class="property-row">
+                    <div class="property-label">Duration (s):</div>
+                    <input type="number" class="property-input" id="animationDuration" value="5" min="0.1" step="0.1">
+                </div>
+                <div class="property-row">
+                    <div class="property-label">Loop:</div>
+                    <select class="dropdown" id="animationLoop">
+                        <option value="once">Once</option>
+                        <option value="repeat">Repeat</option>
+                        <option value="pingpong">Ping Pong</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" id="cancelAnimation">Cancel</button>
+                <button class="button" id="createAnimation">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="curveModal">
+        <div class="modal-content" style="width: 600px;">
+            <div class="modal-header">Edit Animation Curve</div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <div class="tab active" data-tab="position">Position</div>
+                    <div class="tab" data-tab="rotation">Rotation</div>
+                    <div class="tab" data-tab="scale">Scale</div>
+                </div>
+                
+                <div class="tab-content active" id="position-tab">
+                    <div class="property-row">
+                        <div class="property-label">Channel:</div>
+                        <select class="dropdown" id="positionChannel">
+                            <option value="x">X</option>
+                            <option value="y">Y</option>
+                            <option value="z">Z</option>
+                        </select>
+                    </div>
+                    <div class="curve-editor" id="positionCurve">
+                        <canvas class="curve-canvas" id="positionCurveCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="rotation-tab">
+                    <div class="property-row">
+                        <div class="property-label">Channel:</div>
+                        <select class="dropdown" id="rotationChannel">
+                            <option value="x">X</option>
+                            <option value="y">Y</option>
+                            <option value="z">Z</option>
+                        </select>
+                    </div>
+                    <div class="curve-editor" id="rotationCurve">
+                        <canvas class="curve-canvas" id="rotationCurveCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="scale-tab">
+                    <div class="property-row">
+                        <div class="property-label">Channel:</div>
+                        <select class="dropdown" id="scaleChannel">
+                            <option value="x">X</option>
+                            <option value="y">Y</option>
+                            <option value="z">Z</option>
+                        </select>
+                    </div>
+                    <div class="curve-editor" id="scaleCurve">
+                        <canvas class="curve-canvas" id="scaleCurveCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" id="cancelCurve">Cancel</button>
+                <button class="button" id="saveCurve">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <!-- Import file input (hidden) -->
+    <input type="file" id="fileInput" style="display: none;" accept=".json">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/1.6.0/cannon.min.js"></script>
+    <script src="./animateEngine.js"></script>
+</body>
+</html>
