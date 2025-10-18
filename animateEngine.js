@@ -4,8 +4,19 @@
          * M Enterprise
          * Enhanced Animation Engine - Main class that manages the entire animation system
          */
-        class AnimationEngine {
-            constructor(containerId) {
+        (
+            function (global,factory){
+                if (typeof(module) === "object" && typeof(module).exports === "object"){
+                    // Node / CommonJS
+                    module.exports = factory()
+                }else{
+                    // Browser global
+                    global.AnimationEngine = factory()
+                }
+            }(typeof(window) !== "undefined" ? window : this, function (){
+
+                class AnimationEngine {
+                constructor(containerId) {
                 this.container = document.getElementById(containerId);
                 this.sceneManager = new SceneManager();
                 this.animationManager = new AnimationManager(this.sceneManager);
@@ -3540,4 +3551,19 @@
 
         // Initialize the application
         const animationEngine = new AnimationEngine('viewport');
-   
+                   
+    return {AnimationEngine,
+            SceneManager,
+            AnimationManager,
+            PhysicsManager,
+            EditManager,
+            UIManager,
+            RecordingManager,
+            MediaManager,
+            animationEngine
+        }           
+    }
+    )
+)
+
+        
